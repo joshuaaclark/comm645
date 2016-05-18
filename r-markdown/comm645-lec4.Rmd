@@ -1,0 +1,144 @@
+---
+title: "COMM-645: Communities and Subgroups"
+author: "Joshua Clark"
+date:
+output: html_document
+---
+
+Welcome back.
+
+This week we are going to be looking at community detection and structural equivalence within social networks. These tools are some of the most interesting items in our toolbox. With them we can find communities of interest or common practice within various networks and take the first step towards exploring these groups in more depth.
+
+Let's start by loading our data. Today we are going to be looking at the Zachary Karate Club data. This is a famous network examining the affiliations between various students at a dojo and when they associate with each other as well as their instructor. Let's load the data and take a look at the information.
+
+```{r}
+library(igraph)
+karate<-read.graph('karate.graphml', format='graphml')
+plot(karate)
+degree(karate)
+```
+
+
+Let's start with a bottom up approach to community detection by looking for cliques. Clique detection looks for a subgraph of nodes that are fully connected, that is everyone is connected to everyone else. At smaller sizes (2 or 3 nodes) these structures are fairly common and we refer them them as dyads or triads. R let's us set a lower and upper limit of a clique size, so let's look for a fully connected section which has at least 4 people in it as well as the largest clique.
+
+```{r}
+karate.clique<-cliques(karate, min=4)
+karate.clique
+length(karate.clique) #how many cliques?
+karate.clique.max<-largest_cliques(karate)
+karate.clique.max
+length(karate.clique.max)
+```
+
+Both karate.clique and karate.clique.max are lists. We touched on lists briefly the other week, they are generalized containers for holding different types of content within R. In this case each list holds the IDs of the nodes which make up a given clique. We can look inside a list with the double square bracket and the numerical index of its contents. In this case karate.clique.max has two cliques in it, which we can access with the following code.
+
+```{r}
+karate.clique1<-karate.clique.max[[1]]
+karate.clique1
+karate.clique2<-karate.clique.max[[2]]
+karate.clique2
+```
+
+
+We have two largest cliques both of which have Actor 2, Actor 3 and Mr Hi in them. We can use this data to extract a sub-graph, a small component of our larger graph and visualize it.
+
+```{r}
+karate.clique.net.1<-induced.subgraph(karate, vids=karate.clique1)
+karate.clique.net.2<-induced.subgraph(karate, vids=karate.clique2)
+plot(karate.clique.net.1)
+plot(karate.clique.net.2)
+plot(karate.clique.net.1+karate.clique.net.2)
+```
+
+So, like Drake, we've started from the bottom and now we are here. Clique detection is extremely useful for finding small communities within networks. However, for larger networks it is extremely computationally intensive and can take a long time. Top down approaches consider the graph as a whole and make cuts from this starting point to find communities. Therefore they don't have to look at every single edge and node to find clusters. 
+
+The fast-greedy community detection algorithm is top-down approach. Instead of starting by considering each edge within a graph it looks at blobs of nodes and edges and find places where cutting a network into communities maximizes the number of internal connections and minimizes edges outside of the community. We can compare the results of this community detection algorithm to the factions which were originally identified in the Karate network to see how close this approach gets us to the author's observations.
+
+
+```{r}
+set.seed(11)
+fg <- fastgreedy.community(karate) #Fast-Greedy community detection works well for undirected networks but won't work on a directed network..
+membership(fg)
+
+eb<-edge.betweenness.community(karate) #Edge Betweenness community detection works with both directed and undirected networks.
+membership(eb)
+
+l<-layout.fruchterman.reingold(karate)
+par(mfrow=c(1,3)) #plot three images in one row.
+plot(fg, karate, layout=l, main='Fast Greedy Community Detection')
+plot(eb, karate, layout=l, main='Edge Betweenness Community Detection')
+plot(karate, vertex.color=V(karate)$Faction, layout=l, main='Original Communities')
+```
+
+If we want to only look at one community within the graph we can use the subgraph feature to extract it. This creates a new igraph object which works with all our old friends like centrality or degree counting.
+
+```{r}
+par(mfrow=c(1,2))
+karate.community.one<-induced.subgraph(karate, vid=membership(fg)==1)
+plot(karate.community.one, vertex.color='blue', main='Community One')
+plot(karate, vertex.color='yellow', main='Full Graph')
+karate.community.one.degree<-degree(karate.community.one)
+karate.community.one.degree
+karate.degree<-degree(karate)
+karate.degree
+```
+
+Finally we have similarity measures. These are metrics which express how similar or dissimilar any two nodes are within a graph. The Jaccard similarity coefficient of two vertices is the number of common neighbors divided by the number of vertices that are neighbors of at least one of the two vertices being considered. Higher values mean that a nodes share more neighbors within the graph and occupy a similar social space. Zero means  We can also plot out this matrix as a network, showing only high similarity relationships. To do this we need a new package, *reshape2* which allows us to change a matrix into an edgelist. We can also use the reshaped data to make a heatmap for easy visual inspection of the similarities and differences between nodes.
+
+```{r eval=FALSE}
+install.packages('reshape2')
+install.packages('ggplot2')
+```
+
+Let's take a look at calculating jaccard similarity
+
+```{r}
+library(reshape2)
+library(ggplot2)
+par(mfrow=c(1,1))
+karate.jaccard<-similarity(karate, method='jaccard')
+rownames(karate.jaccard)<-V(karate)$name
+colnames(karate.jaccard)<-V(karate)$name
+head(karate.jaccard)
+
+karate.jaccard.melt<-melt(karate.jaccard)
+names(karate.jaccard.melt)<-c('From','To','Coef')
+head(karate.jaccard.melt)
+ggplot(karate.jaccard.melt, aes(x=From, y=To, fill=Coef))+geom_tile(color='black')+scale_fill_gradient(low = "dark red", high = "gold")
+
+karate.jaccard.sub<-subset(karate.jaccard.melt, From!=To & Coef>0.5)
+head(karate.jaccard.sub)
+
+karate.graph<-graph.data.frame(karate.jaccard.sub, directed=FALSE)
+plot(karate.graph, edge.width=E(karate.graph)$value*10)
+```
+
+Looking at the plot or the data-frame we can see the members of the network who have the highest jaccard coefficient and share more of their social circle.
+
+Another way of looking at structural similarity is to examine the adjacency matrices of a given network. If two or more nodes share ties to common neighbors they will have similar looking rows within an adjacency matrix. By looking for similarities between the various rows of a matrix we can find closely related nodes. iGraph doesn't implement this feature out of the box so we need to did our toe into the *statnet* package.
+
+*Statnet* is a network analysis tool built by social scientists. As a result it has some features that are useful to communication scholars. However in my opinion it is a little easier to load and do basic analysis in iGraph which is why we started with it. Unfortunately statnet doesn't read networks the same way that igraph does, so we can't just hand our networks right over to it for analysis. Fortunately there is the excellent *intergraph* package which makes converting between the two easy. You should have statnet already but let's load it, install intergraph and convert our network. After that we will use the sedist to find the Euclidean distance between each node in the network and plot it just like we did the Jaccard coefficient.
+
+```{r eval=FALSE}
+install.packges('intergraph')
+```
+```{r echo=FALSE}
+library(intergraph)
+library(statnet)
+```
+
+```{r}
+karate.sna<-asNetwork(karate)
+karate.sna
+karate.distance<-sedist(karate.sna, method='euclidean')
+rownames(karate.distance)<-V(karate)$name
+colnames(karate.distance)<-V(karate)$name
+karate.distance.m<-melt(karate.distance)
+names(karate.distance.m)<-c('From', "To", 'Distance')
+ggplot(karate.distance.m, aes(x=From, y=To, fill=Distance))+geom_tile(color='black')+scale_fill_gradient(low = "dark red", high = "white")
+
+```
+
+A lower Euclidean distance means that the nodes are more similar, these results should confirm what jaccard similarity told us. By changing the method argument in the *sedist* command we can look at other measures such as the Pearson correlation.
+
+All of these methods are extremely useful for researchers interested in group processes. Using these tools you can look at how communities separate from each other, if specific groups have certain demographic or structural patterns and other fun stuff!

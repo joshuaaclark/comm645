@@ -1,0 +1,169 @@
+---
+title: "CUG, QAP and MRQAP oh my!"
+author: "Joshua Clark"
+date: 
+output: html_document
+---
+
+NOW we dive into some more meaty analysis. This week we are going to be looking at QAP, CUG and MRQAP which comprise "second generation" social network analysis. These tests are an attempt to move past descriptive statistics and create inferential models based on networks. Because of this focus on statistical inference they are much more commonly found in the social sciences literature. As a result we need to begin our migration over towards statnet. 
+
+Today we are going to be using Grey's Anatomy network data from [Bad Hessian](http://badhessian.org/2012/09/lessons-on-exponential-random-graph-modeling-from-greys-anatomy-hook-ups/). Each node is a character on the show and an edge is ah, uh, *hook-up* between the two characters. 
+
+Statnet doesn't support GraphML files so we'll load the node and edge data before sticking it together to form a network
+
+```{r results='hide'}
+# Let's load our edgelist
+library(statnet)
+```
+```{r}
+ga.el<-read.csv('grey-edge.csv', row.names=1, stringsAsFactors = FALSE)
+head(ga.el)
+ga.atts<-read.csv('grey-atts.csv', row.names=1, stringsAsFactors=FALSE)
+head(ga.atts)
+grey.net<-network(ga.el, vertex.attr=ga.atts, vertex.attrnames=colnames(ga.atts),
+                  directed=F, hyper=F, loops=F, multiple=F, bipartite=F)
+grey.net
+#Now we can plot our network and see the gender or other attributes of the node represnted within the 
+#visualization
+set.seed(645)
+plot(grey.net, vertex.col=factor(grey.net %v% 'sex'),
+     label=grey.net %v% 'name', label.cex=.75)
+```
+
+
+Great. Let's start off by looking at some of the basic statistical measures that we can use on node attribute data. The most basic of these is correlation. This isn't a fundamental stats class so we aren't going to explore correlation too much here (wait for 550 for that!). Essentially Pearson correlation takes two continuous variables and looks to see if they change together. If they both go up together the value will be closer to one, if one goes up and the other down closer to negative one. If there is no relationship than you'll get a score of zero. In this case let's add the degree of each node to the node attribute data frame and see if it is correlated with age on the show.
+
+```{r}
+grey.net %v% 'degree'<-degree(grey.net)
+grey.net %v% 'age' <-2015-grey.net %v% 'birthyear'
+cor(grey.net %v% 'degree', grey.net %v% 'age', method='pearson')
+```
+
+A slight correlation, we can also use Spearman's Rank Order correlation to see if degree is correlated with number of seasons on the show (a limited ordinal variable).
+
+```{r}
+cor(grey.net %v% 'degree', grey.net %v% 'season', method='spearman')
+```
+A stronger negative variable, so as the season which you were introduced goes up (i.e. you are newer on the show) your degree count goes down. Makes sense!
+
+###Regression
+
+We can also grab some centrality scores and use them in a regression. Let's fit a linear model on age and see if people who are more central in the network are also more likely to be older.
+
+```{r}
+grey.net %v% 'btwn' <- betweenness(grey.net) 
+gr.lm<-lm(grey.net %v% 'age'~ grey.net %v% 'sex' + 
+            grey.net %v% 'btwn'+ grey.net %v% 'degree', data=ga.atts)
+summary(gr.lm)
+```
+
+Nothing significant there but you get the idea!
+
+###CUG
+
+Let's examine a network measure computed for our observed data. (e.g. reciprocity, transitivity, in-degree centralization, etc.) How can we tell whether the score we're looking at is relatively high/low? Well, we can compute the same measure for all graphs with certain properties (for instance all graphs that have the same size/density as our observed network). Then we can see how the the measure computed for our observed network compares. Of course, in many cases it's not very practical to look at all possible graphs of a particular size and density. Instead, we randomly draw graphs from a uniform distribution (i.e. each graph has an equal probability of being selected) and compare the metrics computed for those graphs with the one we got from our network. This is the basic idea behind the conditional uniform graph (CUG) test.
+
+The function we'll use is cug.test(OurNetwork, Some.network.measure.function, cmode="condition" )
+
+First let's take a look at density. Essentially we are seeing if our network is as dense as a random selection of other networks which have the same number of nodes.
+
+```{r}
+gr.cug.density <- cug.test(grey.net, gden, mode='graph', cmode="size")  
+gden(grey.net)
+gr.cug.density
+plot(gr.cug.density)
+```
+
+It clearly isn't, probably because our edge formation condition is a hook up between two TV doctors, as opposed to an easier edge criteria like friendship. 
+
+Let's also take a look at the transitivity compared to a graph with an equal number of edges.
+
+```{r}
+gr.cug.tri<-cug.test(grey.net, gtrans, mode='graph', cmode="edges")
+gtrans(grey.net)
+gr.cug.tri
+plot(gr.cug.tri)
+plot(grey.net)
+```
+
+Transitivity is lower than expected given the number of edges, in fact it is zero! That means our network has NO direct love triangles. 
+
+We can also see if centrality scores are higher or lower than expected, in this case we need to pass the type of centraliy to the FUN.arg argument to tell statnet what type of centralization we want.
+
+```{r}
+gr.cug.btwn <- cug.test(grey.net, centralization, mode='graph', cmode="edges", 
+                        FUN.arg=list(FUN=betweenness), reps=2000)
+gr.cug.btwn
+plot(gr.cug.btwn)
+
+
+gr.cug.degree <- cug.test(grey.net, centralization, mode='graph', cmode="edges", 
+                        FUN.arg=list(FUN=degree), reps=2000)
+gr.cug.degree
+plot(gr.cug.degree)
+
+```
+
+
+CUG samples uniformly from a distribution of possible graphs that share the value set through c-mode. This can range from all the edges being connected to one node forming a star or every node have one partner. Either way we have the same number of edges but a radically different structure. Let's look at some random graphs with roughly the name number of nodes and densities to see how they compare to our own
+
+```{r}
+
+par(mfrow=c(1,3))
+
+random1<-network(rgraph(44, tprob=gden(grey.net), mode='graph'))
+plot(random1)
+
+random2<-network(rgraph(44, tprob=gden(grey.net), mode='graph'))
+plot(random2)
+
+plot(grey.net)
+```
+
+The QAP test lets us test whether or not a network metric is significantly more or less than expected based on permutations of another network. As an example we can take one of the random graphs that we just generated and see if it is a predictor of tie formation in the Grey' Anatomy dataset (it won't be, but still a good demonstration for the code)
+
+```{r}
+r.qap <- qaptest(list(grey.net, random1), gcor, g1=1, g2=2, reps=100)
+r.qap
+par(mfrow=c(1,1))
+plot(r.qap)
+```
+
+We can also test the effect of one node attribute by turning it into a matrix. Just like an adjacency matrix each row and column is a family in the network. But the intersection between two represents the absolute difference in their wealth. We can use this as a predictor of edges, to see if greater gaps in wealth lead to an increased or decreased likelihood of a tie.
+
+```{r}
+par(mfrow=c(1,1))
+position.diff<-outer(grey.net %v% "position",grey.net %v% "position","==")
+rownames(position.diff)<-grey.net %v% 'name'
+colnames(position.diff)<-grey.net %v% 'name'
+position.diff
+qt2<-qaptest(list(grey.net, position.diff),gcor,g1=1,g2=2)
+summary(qt2)
+plot(qt2)
+```
+
+There is a small effect on the likelihood of a tie given the same position, but not a statistically significant one.
+
+QAP only works with one variable, be it a network or a matrix of node attribute relations. MRQAP extends QAP to take into account multiple data types. We can see if being part of the same Zodiac sign will make someone more likely to be in a relationship, or how an age gap increases the likelihood of a tie forming.
+
+Since the dependent variable is an unweighted adjacency matrix (1=relationship, 0=no relationship) we need to perform a logistic regression to control for the binary nature of the data. 
+
+
+```{r}
+gender.match<-outer(grey.net%v% 'sex', grey.net%v% 'sex', "==")
+b.year.diff<-abs(outer(grey.net%v% 'birthyear', grey.net%v% 'birthyear', "-"))
+grey.log<-netlogit(grey.net, list(gender.match, b.year.diff), mode='graph', nullhyp='qapspp')
+grey.log
+exp(coef(grey.log))
+
+```
+
+
+For weighted networks we can use netlm to fit a linear model on the overall weight/intensity of the relationship using the same internal syntax.
+
+Let's interpret the model, x1 and x2 are the predictor variables in the order they are entered. These are followed by the log-odds and exponentiated coefficients, the later of which tells us the change in probability of an edge forming. We can't dive too deeply in logistic regression right now but it is helpful to know the for Exp(b) that 1 means that the odds are essentially random, Exp(b)<1 means that an increase in the IV decreases the odds of a tie whereas Exp(b)>1 means higher odds. The last column in the summary gives us the two tailed p values.
+
+
+Same sex pairs are much less likely to have a relationship and if the age gap increases relationships are also less likely.
+
+Next week we will continue to extend these ideas and look at ERGMs, which allow us to statistically model more complex elements of networks

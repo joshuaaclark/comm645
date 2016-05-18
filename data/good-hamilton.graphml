@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
+         http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+<!-- Created by igraph -->
+  <key id="v_name" for="node" attr.name="name" attr.type="string"/>
+  <key id="v_gen" for="node" attr.name="gen" attr.type="string"/>
+  <key id="v_gov" for="node" attr.name="gov" attr.type="string"/>
+  <key id="v_act1" for="node" attr.name="act1" attr.type="double"/>
+  <key id="v_act2" for="node" attr.name="act2" attr.type="double"/>
+  <key id="e_weight" for="edge" attr.name="weight" attr.type="double"/>
+  <key id="e_relationship" for="edge" attr.name="relationship" attr.type="string"/>
+  <graph id="G" edgedefault="undirected">
+    <node id="n0">
+      <data key="v_name">Hamilton</data>
+      <data key="v_gen">Male</data>
+      <data key="v_gov">Gov</data>
+      <data key="v_act1">1</data>
+      <data key="v_act2">1</data>
+    </node>
+    <node id="n1">
+      <data key="v_name">Burr</data>
+      <data key="v_gen">Male</data>
+      <data key="v_gov">Gov</data>
+      <data key="v_act1">1</data>
+      <data key="v_act2">1</data>
+    </node>
+    <node id="n2">
+      <data key="v_name">Laurens</data>
+      <data key="v_gen">Male</data>
+      <data key="v_gov">Non Gov</data>
+      <data key="v_act1">1</data>
+      <data key="v_act2">0</data>
+    </node>
+    <node id="n3">
+      <data key="v_name">Lafayette</data>
+      <data key="v_gen">Male</data>
+      <data key="v_gov">Non Gov</data>
+      <data key="v_act1">0</data>
+      <data key="v_act2">0</data>
+    </node>
+    <node id="n4">
+      <data key="v_name">Mulligan</data>
+      <data key="v_gen">Male</data>
+      <data key="v_gov">Non Gov</data>
+      <data key="v_act1">1</data>
+      <data key="v_act2">0</data>
+    </node>
+    <node id="n5">
+      <data key="v_name">Angelica</data>
+      <data key="v_gen">Female</data>
+      <data key="v_gov">Non Gov</data>
+      <data key="v_act1">1</data>
+      <data key="v_act2">1</data>
+    </node>
+    <node id="n6">
+      <data key="v_name">Eliza</data>
+      <data key="v_gen">Female</data>
+      <data key="v_gov">Non Gov</data>
+      <data key="v_act1">1</data>
+      <data key="v_act2">1</data>
+    </node>
+    <node id="n7">
+      <data key="v_name">Peggy</data>
+      <data key="v_gen">Female</data>
+      <data key="v_gov">Non Gov</data>
+      <data key="v_act1">1</data>
+      <data key="v_act2">0</data>
+    </node>
+    <node id="n8">
+      <data key="v_name">Samuel Seabury</data>
+      <data key="v_gen">Male</data>
+      <data key="v_gov">Non Gov</data>
+      <data key="v_act1">1</data>
+      <data key="v_act2">0</data>
+    </node>
+    <node id="n9">
+      <data key="v_name">King George</data>
+      <data key="v_gen">Male</data>
+      <data key="v_gov">Non Gov</data>
+      <data key="v_act1">1</data>
+      <data key="v_act2">1</data>
+    </node>
+    <node id="n10">
+      <data key="v_name">Washington</data>
+      <data key="v_gen">Male</data>
+      <data key="v_gov">Gov</data>
+      <data key="v_act1">1</data>
+      <data key="v_act2">1</data>
+    </node>
+    <node id="n11">
+      <data key="v_name">Charles Lee</data>
+      <data key="v_gen">Male</data>
+      <data key="v_gov">Non Gov</data>
+      <data key="v_act1">1</data>
+      <data key="v_act2">0</data>
+    </node>
+    <node id="n12">
+      <data key="v_name">Jefferson</data>
+      <data key="v_gen">Male</data>
+      <data key="v_gov">Gov</data>
+      <data key="v_act1">0</data>
+      <data key="v_act2">1</data>
+    </node>
+    <node id="n13">
+      <data key="v_name">Madison</data>
+      <data key="v_gen">Male</data>
+      <data key="v_gov">Gov</data>
+      <data key="v_act1">0</data>
+      <data key="v_act2">1</data>
+    </node>
+    <node id="n14">
+      <data key="v_name">Phillip</data>
+      <data key="v_gen">Male</data>
+      <data key="v_gov">Non Gov</data>
+      <data key="v_act1">0</data>
+      <data key="v_act2">1</data>
+    </node>
+    <node id="n15">
+      <data key="v_name">Maria</data>
+      <data key="v_gen">Female</data>
+      <data key="v_gov">Non Gov</data>
+      <data key="v_act1">0</data>
+      <data key="v_act2">1</data>
+    </node>
+    <node id="n16">
+      <data key="v_name">James Reynolds</data>
+      <data key="v_gen">Male</data>
+      <data key="v_gov">Non Gov</data>
+      <data key="v_act1">0</data>
+      <data key="v_act2">1</data>
+    </node>
+    <node id="n17">
+      <data key="v_name">George Eacker</data>
+      <data key="v_gen">Male</data>
+      <data key="v_gov">Non Gov</data>
+      <data key="v_act1">0</data>
+      <data key="v_act2">1</data>
+    </node>
+    <edge source="n0" target="n1">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">rivals</data>
+    </edge>
+    <edge source="n0" target="n2">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">friends</data>
+    </edge>
+    <edge source="n0" target="n3">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">friends</data>
+    </edge>
+    <edge source="n0" target="n4">
+      <data key="e_weight">4</data>
+      <data key="e_relationship">friends</data>
+    </edge>
+    <edge source="n0" target="n5">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">friends</data>
+    </edge>
+    <edge source="n0" target="n6">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">family</data>
+    </edge>
+    <edge source="n0" target="n8">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">enemies</data>
+    </edge>
+    <edge source="n0" target="n10">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">friends</data>
+    </edge>
+    <edge source="n0" target="n11">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">enemies</data>
+    </edge>
+    <edge source="n0" target="n12">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">enemies</data>
+    </edge>
+    <edge source="n0" target="n13">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">neutral</data>
+    </edge>
+    <edge source="n0" target="n14">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">family</data>
+    </edge>
+    <edge source="n0" target="n15">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">lovers</data>
+    </edge>
+    <edge source="n0" target="n16">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">enemies</data>
+    </edge>
+    <edge source="n0" target="n17">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">enemies</data>
+    </edge>
+    <edge source="n1" target="n2">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">enemies</data>
+    </edge>
+    <edge source="n1" target="n3">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">enemies</data>
+    </edge>
+    <edge source="n1" target="n4">
+      <data key="e_weight">2</data>
+      <data key="e_relationship">enemies</data>
+    </edge>
+    <edge source="n1" target="n5">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">na</data>
+    </edge>
+    <edge source="n1" target="n6">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">na</data>
+    </edge>
+    <edge source="n1" target="n7">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">na</data>
+    </edge>
+    <edge source="n1" target="n10">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">friends</data>
+    </edge>
+    <edge source="n1" target="n11">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">friends</data>
+    </edge>
+    <edge source="n1" target="n12">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">friends</data>
+    </edge>
+    <edge source="n1" target="n13">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">friends</data>
+    </edge>
+    <edge source="n1" target="n14">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">na</data>
+    </edge>
+    <edge source="n1" target="n15">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">conspirators</data>
+    </edge>
+    <edge source="n1" target="n16">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">conspirators</data>
+    </edge>
+    <edge source="n2" target="n3">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">friends</data>
+    </edge>
+    <edge source="n2" target="n4">
+      <data key="e_weight">4</data>
+      <data key="e_relationship">friends</data>
+    </edge>
+    <edge source="n2" target="n10">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">friends</data>
+    </edge>
+    <edge source="n2" target="n11">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">enemies</data>
+    </edge>
+    <edge source="n3" target="n4">
+      <data key="e_weight">4</data>
+      <data key="e_relationship">friends</data>
+    </edge>
+    <edge source="n3" target="n10">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">friends</data>
+    </edge>
+    <edge source="n5" target="n6">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">sister</data>
+    </edge>
+    <edge source="n5" target="n7">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">sister</data>
+    </edge>
+    <edge source="n5" target="n10">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">na</data>
+    </edge>
+    <edge source="n5" target="n14">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">na</data>
+    </edge>
+    <edge source="n6" target="n7">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">sister</data>
+    </edge>
+    <edge source="n6" target="n10">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">friends</data>
+    </edge>
+    <edge source="n6" target="n14">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">family</data>
+    </edge>
+    <edge source="n10" target="n11">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">enemies</data>
+    </edge>
+    <edge source="n10" target="n12">
+      <data key="e_weight">2</data>
+      <data key="e_relationship">friends</data>
+    </edge>
+    <edge source="n10" target="n13">
+      <data key="e_weight">2</data>
+      <data key="e_relationship">friends</data>
+    </edge>
+    <edge source="n12" target="n13">
+      <data key="e_weight">8</data>
+      <data key="e_relationship">friends</data>
+    </edge>
+    <edge source="n14" target="n17">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">enemies</data>
+    </edge>
+    <edge source="n15" target="n16">
+      <data key="e_weight">1</data>
+      <data key="e_relationship">family</data>
+    </edge>
+  </graph>
+</graphml>

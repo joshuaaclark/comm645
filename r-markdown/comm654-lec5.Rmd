@@ -1,0 +1,241 @@
+---
+title: "Manipulating Graph Data"
+author: "Joshua Clark"
+date: "10/2/2015"
+output: html_document
+---
+
+This lab is going to be a bit of review and a bit of new stuff. We are going to be looking at the various ways we can manipulate, control and otherwise deal with graph data. Certain aspects of this content have been covering piecemeal throughout the course of the semester but this should condense it all into a nice unified set of code.
+
+###Vertex Attributes
+
+Vertex attributes are often really important for social science research using networks. They can capture many types of information about a particular node and can be interval, ordinal or nominal.
+
+iGraph handles vertex attributes through a special data frame called the vertex frame. Let's load the Enron data again as it has a number of attributes which we can play around with.
+
+```{r}
+library(igraph)
+enr<-read.graph('enron-good.graphml', format='graphml')
+enr
+set.seed(11)
+```
+
+Looking at the graph we have a number of vertex attributes including name, email and note (the person's position within Enron).
+
+We can create new vertex attributes by passing a vector of values to the V() function. The values are assigned to nodes in order that they are entered, so the first row goes to whichever row is first in your data set (in this case Albert Meyers). Keep this in mind when sorting data as it can break the ordering of rows
+
+Often times it is extremely handy to store network metrics within a particular network as attributes. This ensure that each node is associated with its particular scores even if you reorder, subset or sort the network. 
+
+```{r}
+V(enr)$in.degree<-degree(enr, mode='in')
+V(enr)$out.degree<-degree(enr, mode='out')
+V(enr)$eigen.cent<-evcent(enr)$vector
+V(enr)$in.degree
+```
+
+These attributes can be manipulated or used in calculations just like any other variable in a data frame.
+
+```{r}
+V(enr)$total.degree<-V(enr)$in.degree+V(enr)$out.degree
+mean(V(enr)$in.degree)
+sd(V(enr)$out.degree)
+```
+
+The easiest way to think of vertex attributes within iGraph to think of a distinct data frame within the graph that can be accessed through the get.vertex.attribute() function. Let's take a look at it now.
+
+```{r}
+enr.v.attri<-get.vertex.attribute(enr)
+head(enr.v.attri)$in.degree
+```
+
+This gives us a list of vectors, we can also pull the information out as a data frame with the get.data.frame function. 
+
+```{r}
+enr.v.data<-get.data.frame(enr, what='vertices')
+head(enr.v.data)
+```
+
+###Edge Attributes
+Edges are treated the same way, except with the E descriptor.
+
+```{r}
+E(enr)
+enr.e.data<-get.data.frame(enr, what='edges')
+head(enr.e.data)
+```
+
+Just like node attributes edge attributes can be manipulated or summarized.
+
+```{r}
+head(E(enr)$Reciptype)
+table(E(enr)$Reciptype)
+```
+
+Some of you have mentioned looking at networks over time. Dates and times are handled a little differently in R. Given the thousands of different formats there is no generic data class for dates. Instead we have to translate our dates into a format that R can read, at which point we can filter by year, month, day, hour, minutes, seconds or other factors. The standard R interface for managing dates is cumbersome so let's install an alternative, lubridate.
+
+```{r eval=FALSE}
+install.packages('lubridate')
+```
+
+Lubridate let's you specify the data structure with Y,m,d,H,M,S standing for year, month, day, hours, minutes and seconds respectively. Any separator such as hyphens need to be included as well.
+
+Once the date has been converted into an R readable format it is easy to extract elements such as month or year and assign them back as edge attributes.
+
+```{r}
+library(lubridate)
+library(ggplot2)
+good.date<-parse_date_time(E(enr)$Time, order='Y-m-d H:M:S')
+head(good.date)
+E(enr)$month<-ordered(month(good.date, label=TRUE))
+E(enr)$year<-year(good.date)
+E(enr)$day<-day(good.date)
+head(E(enr)$month)
+dates.table<-table(month(good.date, label=TRUE), year(good.date))
+dates.table
+enr.edges<-get.data.frame(enr)
+ggplot(enr.edges, aes(x=factor(month), fill=Reciptype))+geom_bar(color='black')+facet_grid(.~year)
+
+
+```
+
+The Enron scandal broke in October of 2001, and we can see a spike in email traffic around that time as well. 
+
+###Adding or Deleting Data.
+
+Sometimes networks will have superfluous edges or nodes in them. If we delete these in the raw data it can mess up the network construction. But if we delete the offending data inside igraph it will automatically adjust to take these changes into account. 
+
+####Removing Nodes
+
+You may have noticed that there we a number of nodes with "NA" as their name within the network. These are folks who have been removed from the data set for legal reasons by the FBI. While it may be interesting to keep them in let's go through and remove these nodes to clean up our data set and make it easier to read.
+
+```{r}
+table(V(enr)$Name=='NA')
+enr.trim<-delete.vertices(enr, V(enr)$Name=='NA')
+table(V(enr.trim)$Name=='NA')
+```
+
+We also had a number of emails from the 1970s and 80s, these are generic placeholder time stamps for emails with no time data. We can delete all of these edges as well.
+
+```{r}
+table(E(enr.trim)$year)
+enr.trim2<-delete.edges(enr.trim, which(E(enr)$year < 1999))
+table(E(enr.trim2)$year)
+```
+
+##Extracting and Merging Networks.
+
+Oftentimes a researcher will have a large network and want to subset downwards to look at specific communities or sub communities. There are a few levels of specificity that we can look at within networks, sub networks or ego-networks.
+
+####Sub-Networks on Node Attributes
+
+One way to subset down is to look at a network who share some common criteria based on their node attributes. As an example, within a friendship network you could extract all of the members of a community who identify as a particular gender, or who are above or below a given age threshold. Let's generate an ego network containing all of the Enron employee's who have a job description that includes the word president.
+
+Grepl is a form of regular expression (regex), essentially a way to do complex text searches. Regexp can get complicated fast but it is easy to search for a simple string like "President"
+
+```{r}
+grepl('President', V(enr.trim2)$Note)
+```
+
+This TRUE/FALSE vector can be used to extract a sub graph featuring nodes that only have a TRUE flag. This let's us examine a network of all the emails between presidents within Enron.
+
+```{r}
+
+enr.prez<-induced.subgraph(enr.trim2, vids=grepl('President', V(enr.trim2)$Note))
+l<-layout.fruchterman.reingold(enr.prez)
+plot(simplify(enr.prez), edge.arrow.size=0.5, layout=l, vertex.label=NA, vertex.size=7)
+table(V(enr.prez)$Note)
+```
+
+Graphs can be subseted on multiple conditions as long as it produces a logical TRUE/FALSE vector. So we can pull out residents with a exceptionally high in degree
+
+```{r}
+enr.prez.2000<-induced.subgraph(enr.trim2, vids= grepl('President',  V(enr.trim2)$Note) & V(enr.trim2)$in.degree >=2000)
+enr.prez.2000
+plot(simplify(enr.prez.2000), edge.arrow.size=0.5, vertex.size=7, vertex.label=V(enr.prez.2000)$Name)
+```
+
+We can also induce sub graphs based on edges. We generated edge attributes with a month and year earlier in this exercise, let's extract all of the emails from the month of the scandal. We need to wrap our selection logic with *which* so that it returns a numeric index of what edges we are selecting.
+
+```{r}
+demos<-c(1,13,19,25,66)
+demos>3 & demos<10
+which(demos>3 & demos<20)
+demos[which(demos>3 & demos<20)]
+
+enr.crisis<-subgraph.edges(enr.trim2, which(E(enr.trim2)$month=="10" & E(enr.trim2)$year=="2001"))
+plot(simplify(enr.crisis), edge.arrow.size=0.1, vertex.label=NA, vertex.size=7)
+```
+
+Okay, now we are going to combine some previous week's material into this class. Let's start by identifying some communities.Then we can induce a sub graph to only show us one of the communities. The differences in each nodes degree between these two communities will tell us how many connections crossed community boundaries and how many stayed within.
+
+```{r}
+enr.com<-label.propagation.community(enr.crisis)
+enr.mem<-membership(enr.com)
+V(enr.crisis)$membership<-enr.mem
+plot(enr.com, simplify(enr.crisis), edge.arrow.size=0.5, vertex.label=NA, vertex.size=5)
+table(V(enr.crisis)$membership)
+enr.com1<-induced.subgraph(enr.crisis, V(enr.crisis)$membership==1)
+plot(simplify(enr.com1), edge.arrow.size=0.5, vertex.label=NA, vertex.size=7)
+
+deg.com1<-degree(enr.com1)
+deg.com1
+```
+
+###Ego Networks
+
+We can extract the networks of an individual within the network, making them an ego and everyone else an alter. This can be handy when analyzing ego-network data where all of the nodes may be in the same file even though they represent specific cases.
+
+```{r}
+enr.egos<-make_ego_graph(enr.com1, 1)
+```
+
+This makes a list with ego networks for all of the members of a network. We can extract a specific element using the numerical index -- [[1]] for the first ego network and [[2]] for the second -- or we can name each network and use $ to pull them out.
+
+```{r}
+names(enr.egos)<-V(enr.com1)$Name
+head(enr.egos)
+enr.ego.one<-enr.egos[[1]]
+plot(simplify(enr.ego.one), vertex.color='red', edge.arrow.size=0.5, vertex.label=V(enr.ego.one)$Name)
+enr.egos$'Eric Bass'
+enr.egos['Eric Bass']
+plot(simplify(enr.egos$'Kenneth Lay'), vertex.color='dodger blue', edge.arrow.size=0.5)
+```
+
+When running stats on a list we can use the lapply function to use a single bit of code on the entire list. Basically lapply has three parts. First a list that will be processed, then an argument called the function that assigns a temporary name to each item on the list as we iterate through it, finally the actual code with the temporary name subbed in. In this case lapply is working through the list of networks, any one of which is represented by *x*, for each item in the list we plot it or get the degree count, returning a list of results.
+
+
+```{r}
+enr.deg.ego<-lapply(enr.egos, function(x) degree(x))
+head(enr.deg.ego)
+enr.deg.ego.df<-data.frame(degree=enr.deg.ego$"Kenneth Lay")
+enr.deg.ego.df
+par(mfrow=c(3,4))
+lapply(enr.egos[1:12], function(x) plot(simplify(x), edge.arrow.size=0.1))
+
+```
+
+
+###Putting it all together.
+
+Let's combine everything we learned and look at how the Enron network evolved over the course of October 16th, the day things started to get REALLY bad for the company. First let's create a new edge attribute, the hour of day an email was sent. Then let's grab all of the emails from 2001-10-16 in one big subgraph. Finally we'll create a vector of hours and iterate through it, generating a new subgraph and running community detection at each phase.
+
+```{r}
+E(enr)$hour<-hour(E(enr)$Time)
+enr.day<-subgraph.edges(enr, which(E(enr)$year==2001 & E(enr)$month==10 & E(enr)$day==16))
+l=layout.fruchterman.reingold(enr.day)
+hours<-c(9,11,13,15,18,20)
+```
+```{r}
+email.evolve<-lapply(hours, function(q)
+  subgraph.edges(enr.day, which(E(enr.day)$hour<=q)))
+head(email.evolve)
+
+```
+```{r}
+par(mfrow=c(2,3))
+lapply(email.evolve, function(x) 
+  plot(edge.betweenness.community(x), simplify(x), edge.arrow.size=0.1, vertex.label=NA, layout=l, main=max(E(x)$hour)))
+
+```
+
+All of these techniques are exceptionally helpful for studying networks from an evolutionary perspective. In the next few weeks you'll use these tools 

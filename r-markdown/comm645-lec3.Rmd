@@ -1,0 +1,180 @@
+---
+title: 'COMM-645: Network Data'
+author: "Josh Clark"
+date: "8/20/2015"
+output: html_document
+---
+
+Welcome back. After dipping our toes into the world of R and SNA last week we are going to take a step backwards and cover the basic concepts and ideas that define how R relates to data and how to manipulate information within RStudio.
+
+The most important element of any analysis, be it a social network analysis or otherwise is the quality and format of the data. Garbage data give garbage results (leading to the saying *"garbage in, garbage out*, or GIGO). In an ideal world all of our data would be perfectly formatted and ready for analysis, and a lot of teaching datasets have been pre-digested to get to this state. Unfortunately once you start working on your papers or other pieces of research you'll find that this isn't the case. So it is worthwhile to understand how to "munge" data and transform it to suit your needs.
+
+###Data in R
+
+R stores data in a series of nested formats. At the very basic level you have your entry. This can be one of many formats such as characters ('a','b','c' etc.) integers (1,2,3) numeric values (1.2144, 5.1613, 87.119). 
+
+```{r}
+is.character('a')
+is.numeric('a')
+
+is.character(1)
+is.numeric(1)
+
+```
+These entries can be combined in various forms, the simplest are vectors. A vector is just a chain of entries of a given length which are considered a single object by R.  We can define a vector by giving a list of entries in paraentheses with the letter *c* beforehand. 
+
+```{r}
+vector1<-c(1,2,3)
+vector2<-c(3,4,5)
+
+vector1+1
+vector2-1
+
+vector1+vector2
+
+vector1==vector2
+
+vector3<-c(7,8,9,10)
+vector1+vector3
+
+vector4<-c(7,8,9,10,11,12)
+vector1+vector4
+```
+Just a reminder, the **<-** symbol means assign, we are giving each vector a name and putting it into the R environment for future reference.
+
+Note that action applied to the vector influences the whole thing, so *+1* adds one to the entire vector. If two vectors are compared or operated on together than R matches up the positions and applies the function, (adding 1 to 3, 2 to 4, 3 to 5). If one vector is longer than another than R will either throw an error (if the longer vector is not a multiple of the shorter) or rotate through the longer factor performing the function in order. 
+
+A handy way to think of vectors is like the columns of a spreadsheet such as excel. If we had a dataset for this class we could have an age vector, a gender vector and so on and so forth, each of which would have 18 entries. Keeping track of all these scattered vectors would be a pain, so R has a data frame function which basically collects them all into one spreadsheet like object and gives each column a name.
+
+```{r}
+df1<-data.frame(vector1, vector2)
+df1
+df1$vector1
+df1$vector2
+df1$vector1+df1$vector2
+df1$newvector<-df1$vector1*5
+```
+If we wanted to get at the data in a specific column/vector which has been bundled into a dataframe first we call the name of the frame, then a dollar sign (which tells R to look inside the frame) and the name of the column. We can manipulate or transform these vectors just like did above and create new columns in the database with the <- operator.
+
+We can also represent a group of vectors as a matrix. Matices are really similar to dataframes in so far as they are a bunch of vectors stuck together. However there is one major difference, generally R considers dataframes to contain separate variables, so if you act on one part of the dataframe it generally won't influence other parts. Matrices are viewed as a whole, we'll get into the opportunities that this opens up later in this discussion but lets construct a matrix right now. The easiest way to do this is to convert a dataframe into a matrix as their structure is basically the same, so all we are really doing is changing how R reads the data.
+
+```{r}
+ma1<-as.matrix(df1)
+ma1
+ma1*5
+```
+
+Finally we have lists, which are a form of "super container." Lists hold collections of things. You can have a list of vertices, a list of dataframes, a list of single characters or any combination of the above. Each item can be accessed by a name or numeric position within the list, with one as the first item etc. etc.
+
+```{r}
+list1<-list(vector1,vector2, df1)
+list1
+list1[1]
+list1[2]
+is.list(list1)
+```
+We won't be using lists very much this semester, but sometimes libraries within R will give you a list as an output, so it is important to know how to use one.
+
+###Dataframes and iGraph
+
+Social network data is a little different from the standard statistical model in so far as it is relational, entry represents a relationship or someone involved in a relationship instead of an isolated data point. Because of this social network packages such as iGraph examine and manipulate data different from a standard data frame. Let's take a moment and look at the two major ways which network data can be stored. 
+
+The common demoninator between different forms of network data is some form of node list. Remember that networks are comprised of nodes (people, places, things, concepts) and edges (relationships, connections). A node list establishes the former and provides information about each nodes (i.e. node attributes). Node lists generally consist of some form of identifying attribute such as a name or unique number followed by attributes which describe the node. So if we made a node list describing everyone in the room by age and hair color it would look like.
+
+*Id, Age, HairColor*
+*Josh', 28, 'red'*
+
+Let's take a look at a node list in practice. First we need to read the data into R. Unlike last week we will be working with a CSV (comma separated variable) file. CSVs are generic spreadsheet format that stores data in a universally readable manner. Unlike graphml files CSVs do not come in a network friendly format, instead they need to be loaded and constructed into a network within R.
+
+Today we are going to be working with the Enron email data. An exciting data set which captures all of the email conversation between top executives at the ill-fated Enron Corp before its spectacular implosion in the early 2000s. 
+The node data in this case includes the email of each executive, their name and their position within the company. Let's read it now into a file called *enron.nl*
+
+```{r}
+enron.nl<-read.csv('enron-nl.csv')
+head(enron.nl)
+```
+That's all their is to it! You can examine the file more closely by double clicking on it in the environment window if you'd like.
+
+###Edge Data
+Unlike node lists there are multiple formats for storing edge data. The first is an adjacency matrix. The easiest way to think about this is if you've ever played a game of battleship. Each board has rows (a:z) and columns (1:12) and when you call out a coordinate (let's say B-2!) that refers to a specific spot in a grid. An adjacency matrix is like battleship only the row and columns are comprised of all of the names of people in the network. If they have a relationship than the intersection of their two names on the grid has a number in it (in this case representing how many emails were exchanged). If they don't have a relationship the value will be zero. Let's read the Enron adjacency matrix and take a look at it.
+
+```{r, eval=FALSE}
+enron.am<-read.csv('enron-am.csv')
+head(enron.am)
+```
+As you can see we've got a big grid made up mainly of zeroes with some larger numbers that represent an email relationship. So we have our node and our edge data but they are currently separate. We need to mash them together to form a network which we can analyze.
+
+```{r eval=FALSE}
+library(igraph) #load igraph
+enron.am<-as.matrix(enron.am) #transform data into a matrix
+enron.net.am<-graph.adjacency(enron.am, mode='directed') #create a network
+vertex.attributes(enron.net.am)<-enron.nl #assign vertex attributes
+enron.net.am #look at the network
+```
+Hooray it worked! Adjacency matrices have issues though that prevent them from being used with really really big networks. A lot of the data in any matrix will be empty, taking up space to represent the lack of a relationship. The edge list format gets around this by spelling out each relationship between every member of the network with two columns, the source of a relationship and a target. If an edge is not mentioned in the list it is assumed not the exist. This means we aren't taking up space declaring non existent relationships. Let's load an edge list and make a graph out of it.
+
+```{r eval=FALSE}
+enron.el<-read.csv('enron-el.csv') #read CSV
+
+enron.net.el<-graph.data.frame(enron.el, vertices=enron.nl) #construct a network, we can declare our node list at the same time as we build it with this format.
+enron.net.el #look at the network
+degree(enron.net.el)==degree(enron.net.am)
+```
+
+To review, R stores data in a number of different ways and these formats can be used to represent networks. Unless data is stored in a format which is specialized for network data the usual process of loading or managing data involves reading a CSV and transforming it into a network format. 
+
+###Matrix Algebra 
+Matrices are a special case. We can mathematically manipulate them in a number of different ways to find values or create contrasts between different parts of the matrix. Since networks can be represented in a matrix format this opens up possibilities for using matrix algebra on networks. We are not going to take too much of a detour into this topic today, but let's take a moment to examine some basic matrix operations so that you can recognize them if they are described in the literature.
+
+```{r, error=TRUE}
+
+a<-data.frame(c(3,5),c(-4,2)) #Creating some matrices
+a1<-data.frame(c(1,0),c(-4,3))
+
+b<-data.frame(c(1,0),c(7,3))
+b1<-data.frame(c(3,2))
+
+c<-data.frame(c(3,7))
+c1<-data.frame(c(1,7))
+
+a<-as.matrix(a) #Getting them in the proper format
+a1<-as.matrix(a1)
+
+b<-as.matrix(b)
+b1<-as.matrix(b1)
+
+c<-as.matrix(c)
+c1<-as.matrix(c1)
+
+a+b #Addition
+a+b==b+a
+
+
+a+c
+# Element wise multiplication only works if the number of columns in the first matrix == number of rows in second
+
+ncol(a1)==nrow(b1)
+a1 %*% b1 #Element wise matrix multiplication, note the different sign
+ncol(b1)==nrow(a1)
+b1 %*% a1
+
+
+
+
+5*a1 #Scalar matrix multiplication
+
+t(a1) #Transposing
+t(b1)
+
+#Transposing can be handy when multiplying matrices
+
+ncol(c1)==nrow(a1)
+c1 %*% a1
+
+c1<-t(c1)
+ncol(c1)==nrow(a1)
+c1 %*% a1
+```
+
+Matrix operations are one of the many ways in which you can alter your data within R. Consider checking out the *dplyr* and *reshape2* packages for more advanced techniuqes. 
+

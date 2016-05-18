@@ -1,0 +1,100 @@
+---
+title: "comm645-lab2"
+author: "Josh Clark"
+date: "8/27/2015"
+output: html_document
+---
+
+Welcome back. This week we are going to be replicating the demo which I did last week as well as exploring a few more simple functions in R. 
+
+In order to keep things from getting boring let's look at some new data, something we can all relate to, academics being cliquish with each other!
+
+Specifically we are going to examine some friendship data from a study on [community detection](http://arxiv.org/pdf/0707.1646) which focuses on friendships between faculty members at several UK Universities. 
+
+First we need to load the igraph library and read the graph file into R. Remember, everything to the left of the <- sign indicates assigning a variable name to a particular object or function. So let's read the graph and give it the name ukf (UK Faculty).
+```{r data-load}
+library(igraph)
+ukf<-read.graph('ukf.graphml', format='graphml')
+#ukf<-read.graph('ukf.graphml', format='graphml')
+ukf
+vcount(ukf)
+ecount(ukf)
+```
+
+So we have 81 nodes and 817 edges. Let's re-run the same stats that we did last time (degree counts, closeness and betweenness centrality). This time we are going to save the data into a "data frame" instead of printing it out. We'll go into the specifics of data frame after the break but for now just think of it as a spreadsheet inside R, with each row representing a person and each row a variable.
+
+```{r load}
+deg<-degree(ukf)
+cen<-closeness(ukf)
+btwn<-betweenness(ukf)
+
+net.stat<-data.frame(deg,cen,btwn)
+head(net.stat)
+```
+
+As you can see we've got everyone bundled into a nice little spreadsheet which we can then use for other analysis.To pull out a specific measure just type out the name of the data frame, a dollar sign and the name of the variable. We can sort each column, view it or run other descriptive stats on any variable.
+
+```{r sort}
+mean(net.stat$deg)
+median(net.stat$btwn)
+sd(net.stat$cen)
+```
+
+
+Congratulations, we've just replicated the demo from week one. The only thing left to do is plot the network. Plotting networks in R isn't as easy as using a dedicated visualization suite such as Gephi but it does have several advantages. By visualizing in R you can check the structure of a network in the same tool you are doing analysis with, saving time and energy.
+
+The default plotting layout for R can be kind of ugly. Let's take a look.
+
+```{r plot1}
+plot(ukf)
+```
+
+Eesh, that's a network but a messy one. For each element of the network we can control several elements of the style to display different characteristics of the network.
+
+For nodes we can manipulate
+* Size
+* Shape
+* Color
+* Location
+* Label
+
+Edges allow us to control
+* Line size
+* Arrow size
+* Shape
+* Color
+* Label 
+
+Using these tools together we can make an informative visualization.
+
+First up is setting the layout. iGraph supports a number of layouts which emphasis different elements of the graph. There isn't time to explore the pros and cons of each layout but you can see a full list by typing *?layout*
+
+Second are the plotting parameters. These come from two locations, if your network has attributes which match the name of any parameter R will use those values in the visualization. Otherwise values provided in the plot() function will be used. 
+
+Parameter  | R Call
+------------- | -------------
+Node Size  | vertex.size
+Node Color  | vertex.color
+Node Shape  | vertex.shape
+Node Label Text | vertex.label
+Label Text |  vertex.label
+Label Size  | vertex.label.cex
+Label Color | vertex.label.color
+Label Font  | vertex.label.family
+Edge Shape  | edge.ity, edge.curved
+Edge Color  | edge.color
+Edge Thickness  | edge.thickness
+Arrow Size  | edge.arrow.size
+Layout  | layout
+Zoom  | margin (negative=zoomed in, positive zoomed out)
+
+With these functions in mind let's plot a network that looks a bit better.
+```{r}
+set.seed(87)
+l=layout.fruchterman.reingold(ukf)
+plot(ukf, layout=l, vertex.size=deg/3, vertex.color='light blue', vertex.shape='sphere',
+vertex.label.family="Helvetica", vertex.label.cex=0.55, vertex.label.color='black', edge.curved=TRUE, edge.lty=5,
+edge.color='grey', edge.arrow.size=0.5, margin=-0.20)
+```
+
+At this point you've learned to read a network from your computer, compute basic metrics such as degree or simple centrality scores and visualized a network in a meaningful way. For the lab you'll need to repeat this exercise on your own with some new data. Feel free to reuse code and ideas from this demo. As always if you run into trouble email me at joshuaac@usc.edu
